@@ -376,13 +376,6 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                             Expression.Constant(Navigation),
                             targetEntityExpression,
                             relatedArrayAccessExpression));
-
-                    isNullBlockExpressions.Add(
-                        Expression.Call(
-                            _setRelationshipIsLoadedMethodInfo,
-                            stateManagerProperty,
-                            Expression.Constant(Navigation),
-                            targetEntityExpression));
                 }
                 else
                 {
@@ -391,6 +384,20 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                             .MakeMemberAccess(Navigation.GetMemberInfo(false, true))
                             .CreateAssignExpression(relatedEntityExpression));
                 }
+
+                blockExpressions.Add(
+                    Expression.Call(
+                        _setRelationshipIsLoadedMethodInfo,
+                        stateManagerProperty,
+                        Expression.Constant(Navigation),
+                        targetEntityExpression));
+
+                isNullBlockExpressions.Add(
+                    Expression.Call(
+                        _setRelationshipIsLoadedMethodInfo,
+                        stateManagerProperty,
+                        Expression.Constant(Navigation),
+                        targetEntityExpression));
 
                 var inverseNavigation = Navigation.FindInverse();
 
@@ -422,6 +429,16 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                                 : relatedEntityExpression.MakeMemberAccess(
                                         inverseNavigation.GetMemberInfo(forConstruction: false, forSet: true))
                                     .CreateAssignExpression(targetEntityExpression));
+                    }
+
+                    if (!collection)
+                    {
+                        blockExpressions.Add(
+                            Expression.Call(
+                                _setRelationshipIsLoadedMethodInfo,
+                                stateManagerProperty,
+                                Expression.Constant(inverseNavigation),
+                                relatedArrayAccessExpression));
                     }
                 }
 
@@ -491,11 +508,15 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                 IPropertyBase navigation,
                 object entity)
             {
-                var internalEntityEntry = stateManager.TryGetEntry(entity);
+                var entry = stateManager
+                    .GetOrCreateEntry(entity, (IEntityType)navigation.DeclaringType);
 
-                Debug.Assert(internalEntityEntry != null);
+                entry.SetIsLoaded((INavigation)navigation);
 
-                internalEntityEntry.SetIsLoaded((INavigation)navigation);
+                if (entry.EntityState == EntityState.Detached)
+                {
+                    entry.StateManager.ForgetDetachedEntity(entity);
+                }
             }
 
             private static readonly MethodInfo _addToCollectionSnapshotMethodInfo

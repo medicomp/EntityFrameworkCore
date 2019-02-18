@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -101,7 +102,8 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
         {
             var entry = _dependencies.StateManager.TryGetEntry(entity);
 
-            if (entry != null)
+            if (entry != null
+                && entry.EntityState != EntityState.Detached)
             {
                 return entry[property];
             }
@@ -189,13 +191,15 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
             {
                 if (untypedEnumerator == null)
                 {
-                    if (tracking)
+                    var entry = _dependencies
+                        .StateManager
+                        .GetOrCreateEntry(entity, navigation.DeclaringEntityType);
+
+                    entry.SetIsLoaded(navigation);
+                    
+                    if (entry.EntityState == EntityState.Detached)
                     {
-                        var internalEntityEntry = _dependencies.StateManager.TryGetEntry(entity);
-
-                        Debug.Assert(internalEntityEntry != null);
-
-                        internalEntityEntry.SetIsLoaded(navigation);
+                        entry.StateManager.ForgetDetachedEntity(entity);
                     }
 
                     return;
@@ -252,13 +256,30 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
 
                         inverseClrPropertySetter.SetClrValue(enumerator.Current, entity);
 
-                        if (tracking)
+                        var inverseIsCollection = inverseNavigation.IsCollection();
+
+                        if (tracking
+                            || !inverseIsCollection)
                         {
-                            var internalEntityEntry = _dependencies.StateManager.TryGetEntry(enumerator.Current);
+                            var inverseEntry
+                                = _dependencies
+                                    .StateManager
+                                    .GetOrCreateEntry(enumerator.Current, inverseNavigation.DeclaringEntityType);
 
-                            Debug.Assert(internalEntityEntry != null);
+                            if (!inverseIsCollection)
+                            {
+                                inverseEntry.SetIsLoaded(inverseNavigation);
+                            }
 
-                            internalEntityEntry.SetRelationshipSnapshotValue(inverseNavigation, entity);
+                            if (tracking)
+                            {
+                                inverseEntry.SetRelationshipSnapshotValue(inverseNavigation, entity);
+                            }
+
+                            if (inverseEntry.EntityState == EntityState.Detached)
+                            {
+                                inverseEntry.StateManager.ForgetDetachedEntity(enumerator.Current);
+                            }
                         }
                     }
 
@@ -280,14 +301,21 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                 }
             }
 
+            var internalEntityEntry
+                = _dependencies
+                    .StateManager
+                    .GetOrCreateEntry(entity, navigation.DeclaringEntityType);
+
             if (tracking)
             {
-                var internalEntityEntry = _dependencies.StateManager.TryGetEntry(entity);
-
-                Debug.Assert(internalEntityEntry != null);
-
                 internalEntityEntry.AddRangeToCollectionSnapshot(navigation, (IEnumerable<object>)collection);
-                internalEntityEntry.SetIsLoaded(navigation);
+            }
+
+            internalEntityEntry.SetIsLoaded(navigation);
+
+            if (internalEntityEntry.EntityState == EntityState.Detached)
+            {
+                internalEntityEntry.StateManager.ForgetDetachedEntity(entity);
             }
         }
 
@@ -335,13 +363,15 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
             {
                 if (untypedAsyncEnumerator == null)
                 {
-                    if (tracking)
+                    var entry = _dependencies
+                        .StateManager
+                        .GetOrCreateEntry(entity, navigation.DeclaringEntityType);
+
+                    entry.SetIsLoaded(navigation);
+
+                    if (entry.EntityState == EntityState.Detached)
                     {
-                        var internalEntityEntry = _dependencies.StateManager.TryGetEntry(entity);
-
-                        Debug.Assert(internalEntityEntry != null);
-
-                        internalEntityEntry.SetIsLoaded(navigation);
+                        entry.StateManager.ForgetDetachedEntity(entity);
                     }
 
                     return;
@@ -398,13 +428,30 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
 
                         inverseClrPropertySetter.SetClrValue(asyncEnumerator.Current, entity);
 
-                        if (tracking)
+                        var inverseIsCollection = inverseNavigation.IsCollection();
+
+                        if (tracking
+                            || !inverseIsCollection)
                         {
-                            var internalEntityEntry = _dependencies.StateManager.TryGetEntry(asyncEnumerator.Current);
+                            var inverseEntry
+                                = _dependencies
+                                    .StateManager
+                                    .GetOrCreateEntry(asyncEnumerator.Current, inverseNavigation.DeclaringEntityType);
 
-                            Debug.Assert(internalEntityEntry != null);
+                            if (!inverseIsCollection)
+                            {
+                                inverseEntry.SetIsLoaded(inverseNavigation);
+                            }
 
-                            internalEntityEntry.SetRelationshipSnapshotValue(inverseNavigation, entity);
+                            if (tracking)
+                            {
+                                inverseEntry.SetRelationshipSnapshotValue(inverseNavigation, entity);
+                            }
+
+                            if (inverseEntry.EntityState == EntityState.Detached)
+                            {
+                                inverseEntry.StateManager.ForgetDetachedEntity(asyncEnumerator.Current);
+                            }
                         }
                     }
 
@@ -423,14 +470,21 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                 }
             }
 
+            var internalEntityEntry
+                = _dependencies
+                    .StateManager
+                    .GetOrCreateEntry(entity, navigation.DeclaringEntityType);
+
             if (tracking)
             {
-                var internalEntityEntry = _dependencies.StateManager.TryGetEntry(entity);
-
-                Debug.Assert(internalEntityEntry != null);
-
                 internalEntityEntry.AddRangeToCollectionSnapshot(navigation, (IEnumerable<object>)collection);
-                internalEntityEntry.SetIsLoaded(navigation);
+            }
+
+            internalEntityEntry.SetIsLoaded(navigation);
+
+            if (internalEntityEntry.EntityState == EntityState.Detached)
+            {
+                internalEntityEntry.StateManager.ForgetDetachedEntity(entity);
             }
         }
 

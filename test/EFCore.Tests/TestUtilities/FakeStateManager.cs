@@ -121,5 +121,6 @@ namespace Microsoft.EntityFrameworkCore.TestUtilities
         public void CascadeChanges(bool force) => throw new NotImplementedException();
         public void CascadeDelete(InternalEntityEntry entry, bool force) => throw new NotImplementedException();
         public IDiagnosticsLogger<DbLoggerCategory.Update> UpdateLogger { get; }
+        public void ForgetDetachedEntity(object entity) => throw new NotImplementedException();
     }
 }
