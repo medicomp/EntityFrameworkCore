@@ -2762,6 +2762,14 @@ namespace Microsoft.EntityFrameworkCore.Internal
                 failedBinds, parameters);
 
         /// <summary>
+        ///     Property '{property}' on entity type '{entityType}' matches both '{field1}' and '{field2}' by convention. Explicitly specify the backing field to use with '.HasField()' in 'OnModelCreating()'.
+        /// </summary>
+        public static string ConflictingBackingFields([CanBeNull] object property, [CanBeNull] object entityType, [CanBeNull] object field1, [CanBeNull] object field2)
+            => string.Format(
+                GetString("ConflictingBackingFields", nameof(property), nameof(entityType), nameof(field1), nameof(field2)),
+                property, entityType, field1, field2);
+
+        /// <summary>
         ///     The navigation '{navigation}' cannot be added because it targets the query type '{queryType}'. Navigations can only target entity types.
         /// </summary>
         public static string NavigationToQueryType([CanBeNull] object navigation, [CanBeNull] object queryType)
