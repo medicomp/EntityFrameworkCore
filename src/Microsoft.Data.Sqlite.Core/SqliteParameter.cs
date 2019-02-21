@@ -189,7 +189,7 @@ namespace Microsoft.Data.Sqlite
         public override object Value
         {
             get => _value;
-            set { _value = value; }
+            set { _value = value ?? DBNull.Value; }
         }
 
         /// <summary>
