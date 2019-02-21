@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
+namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions
 {
     public class SqlBinaryExpression : SqlExpression
     {

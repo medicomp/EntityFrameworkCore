@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
@@ -73,8 +74,7 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
                         false);
 
                     case nameof(DateTime.TimeOfDay):
-                        return new SqlUnaryExpression(
-                            ExpressionType.Convert,
+                        return new SqlCastExpression(
                             instance,
                             returnType,
                             null,
@@ -102,8 +102,7 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
 
                         return declaringType == typeof(DateTime)
                             ? (SqlExpression)serverTranslation
-                            : new SqlUnaryExpression(
-                                ExpressionType.Convert,
+                            : new SqlCastExpression(
                                 serverTranslation,
                                 returnType,
                                 serverTranslation.TypeMapping,

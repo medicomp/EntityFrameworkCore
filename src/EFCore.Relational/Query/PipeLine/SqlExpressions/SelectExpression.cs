@@ -1,13 +1,12 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query.PipeLine;
 
-namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
+namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions
 {
     public class SelectExpression : TableExpressionBase
     {
@@ -24,6 +23,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
         public SqlExpression Predicate { get; private set; }
         public SqlExpression Limit { get; private set; }
         public SqlExpression Offset { get; private set; }
+        public bool IsDistinct { get; private set; }
 
         private SelectExpression(
             IDictionary<ProjectionMember, Expression> projectionMapping,
@@ -148,6 +148,12 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                         existingOrdering[i].Expression,
                         !existingOrdering[i].Ascending));
             }
+        }
+
+        public void ApplyDistinct()
+        {
+            IsDistinct = true;
+            ClearOrdering();
         }
 
         public void ClearOrdering()

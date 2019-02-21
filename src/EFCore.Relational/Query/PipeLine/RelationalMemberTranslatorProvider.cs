@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {

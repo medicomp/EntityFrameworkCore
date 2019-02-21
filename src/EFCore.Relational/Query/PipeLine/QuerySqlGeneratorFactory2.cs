@@ -10,7 +10,8 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
         private readonly IRelationalCommandBuilderFactory _commandBuilderFactory;
         private readonly ISqlGenerationHelper _sqlGenerationHelper;
 
-        public QuerySqlGeneratorFactory2(IRelationalCommandBuilderFactory commandBuilderFactory,
+        public QuerySqlGeneratorFactory2(
+            IRelationalCommandBuilderFactory commandBuilderFactory,
             ISqlGenerationHelper sqlGenerationHelper)
         {
             _commandBuilderFactory = commandBuilderFactory;
@@ -19,7 +20,8 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
         public QuerySqlGenerator Create()
         {
-            return new QuerySqlGenerator(_commandBuilderFactory,
+            return new QuerySqlGenerator(
+                _commandBuilderFactory,
                 _sqlGenerationHelper);
         }
     }

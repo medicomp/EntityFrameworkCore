@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Query.PipeLine;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {
@@ -21,9 +21,9 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 {
                     var nonNull = isLeftNull ? sqlBinary.Right : sqlBinary.Left;
 
-                    return new SqlUnaryExpression(
-                        sqlBinary.OperatorType,
+                    return new SqlNullExpression(
                         nonNull,
+                        sqlBinary.OperatorType == ExpressionType.NotEqual,
                         sqlBinary.Type,
                         sqlBinary.TypeMapping,
                         sqlBinary.IsCondition);

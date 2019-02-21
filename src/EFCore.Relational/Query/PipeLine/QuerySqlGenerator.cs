@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
@@ -45,9 +47,10 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
         public virtual IRelationalCommand GetCommand(
             SelectExpression selectExpression,
-            IReadOnlyDictionary<string, object> parameterValues)
+            IReadOnlyDictionary<string, object> parameterValues,
+            IDiagnosticsLogger<DbLoggerCategory.Database.Command> commandLogger)
         {
-            _relationalCommandBuilder = _relationalCommandBuilderFactory.Create();
+            _relationalCommandBuilder = _relationalCommandBuilderFactory.Create(commandLogger);
 
             //_parameterNameGenerator = Dependencies.ParameterNameGeneratorFactory.Create();
 
@@ -77,6 +80,11 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 Visit(selectExpression.Limit);
 
                 _relationalCommandBuilder.Append(") ");
+            }
+
+            if (selectExpression.IsDistinct)
+            {
+                _relationalCommandBuilder.Append("DISTINCT ");
             }
 
             if (selectExpression.Projection.Any())
@@ -247,48 +255,52 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             }
         }
 
-        protected override Expression VisitSqlUnary(SqlUnaryExpression sqlUnaryExpression)
+        protected override Expression VisitLike(LikeExpression likeExpression)
         {
-            switch (sqlUnaryExpression.OperatorType)
+            Visit(likeExpression.Match);
+            _relationalCommandBuilder.Append(" LIKE ");
+            Visit(likeExpression.Pattern);
+
+            if (likeExpression.EscapeChar != null)
             {
-                case ExpressionType.Not:
-                    {
-                        _relationalCommandBuilder.Append("NOT (");
-                        Visit(sqlUnaryExpression.Operand);
-                        _relationalCommandBuilder.Append(")");
-
-                        break;
-                    }
-
-                case ExpressionType.Equal:
-                    {
-                        Visit(sqlUnaryExpression.Operand);
-                        _relationalCommandBuilder.Append(" IS NULL");
-
-                        break;
-                    }
-
-                case ExpressionType.NotEqual:
-                    {
-                        Visit(sqlUnaryExpression.Operand);
-                        _relationalCommandBuilder.Append(" IS NOT NULL");
-
-                        break;
-                    }
-
-                case ExpressionType.Convert:
-                    {
-                        _relationalCommandBuilder.Append("CAST(");
-                        Visit(sqlUnaryExpression.Operand);
-                        _relationalCommandBuilder.Append(" AS ");
-                        _relationalCommandBuilder.Append(sqlUnaryExpression.TypeMapping.StoreType);
-                        _relationalCommandBuilder.Append(")");
-
-                        break;
-                    }
+                _relationalCommandBuilder.Append(" ESCAPE ");
+                Visit(likeExpression.EscapeChar);
             }
 
-            return sqlUnaryExpression;
+            return likeExpression;
+        }
+
+        protected override Expression VisitCase(CaseExpression caseExpression)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Expression VisitSqlCast(SqlCastExpression sqlCastExpression)
+        {
+            _relationalCommandBuilder.Append("CAST(");
+            Visit(sqlCastExpression.Operand);
+            _relationalCommandBuilder.Append(" AS ");
+            _relationalCommandBuilder.Append(sqlCastExpression.TypeMapping.StoreType);
+            _relationalCommandBuilder.Append(")");
+
+            return sqlCastExpression;
+        }
+
+        protected override Expression VisitSqlNot(SqlNotExpression sqlNotExpression)
+        {
+            _relationalCommandBuilder.Append("NOT (");
+            Visit(sqlNotExpression.Operand);
+            _relationalCommandBuilder.Append(")");
+
+            return sqlNotExpression;
+        }
+
+        protected override Expression VisitSqlNull(SqlNullExpression sqlNullExpression)
+        {
+            Visit(sqlNullExpression.Operand);
+            _relationalCommandBuilder.Append(sqlNullExpression.Negated ? " IS NOT NULL" : " IS NULL");
+
+            return sqlNullExpression;
         }
     }
 }

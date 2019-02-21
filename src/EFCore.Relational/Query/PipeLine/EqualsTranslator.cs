@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
-using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 {
@@ -59,11 +59,10 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
         private SqlExpression RemoveObjectConvert(SqlExpression expression)
         {
-            if (expression is SqlUnaryExpression sqlUnary
-                && sqlUnary.Type == typeof(object)
-                && sqlUnary.OperatorType == ExpressionType.Convert)
+            if (expression is SqlCastExpression sqlCast
+                && sqlCast.Type == typeof(object))
             {
-                return sqlUnary.Operand;
+                return sqlCast.Operand;
             }
 
             return expression;

@@ -2,8 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
@@ -28,6 +28,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             }
 
             if (expression.TypeMapping != null)
+                // ColumnExpression, SqlNullExpression, SqlNotExpression should be captured here.
             {
                 if (expression.IsCondition == condition)
                 {
@@ -39,8 +40,17 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             switch (expression)
             {
+                case CaseExpression caseExpression:
+                    return ApplyTypeMappingOnCase(caseExpression, typeMapping, condition);
+
+                case LikeExpression likeExpression:
+                    return ApplyTypeMappingOnLike(likeExpression, typeMapping, condition);
+
                 case SqlBinaryExpression sqlBinaryExpression:
                     return ApplyTypeMappingOnSqlBinary(sqlBinaryExpression, typeMapping, condition);
+
+                case SqlCastExpression sqlCastExpression:
+                    return ApplyTypeMappingOnSqlCast(sqlCastExpression, typeMapping, condition);
 
                 case SqlConstantExpression sqlConstantExpression:
                     return ApplyTypeMappingOnSqlConstant(sqlConstantExpression, typeMapping, condition);
@@ -54,13 +64,31 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 case SqlParameterExpression sqlParameterExpression:
                     return ApplyTypeMappingOnSqlParameter(sqlParameterExpression, typeMapping, condition);
 
-                case SqlUnaryExpression sqlUnaryExpression:
-                    return ApplyTypeMappingOnSqlUnary(sqlUnaryExpression, typeMapping, condition);
-
                 default:
                     return ApplyTypeMappingOnExtension(expression, typeMapping, condition);
 
             }
+        }
+
+        protected virtual SqlExpression ApplyTypeMappingOnSqlCast(
+            SqlCastExpression sqlCastExpression, RelationalTypeMapping typeMapping, bool condition)
+        {
+            var operand = ApplyTypeMapping(
+                sqlCastExpression.Operand,
+                _typeMappingSource.FindMapping(sqlCastExpression.Operand.Type),
+                false);
+
+            return new SqlCastExpression(
+                operand,
+                sqlCastExpression.Type,
+                typeMapping,
+                condition);
+        }
+
+        protected virtual SqlExpression ApplyTypeMappingOnCase(
+            CaseExpression caseExpression, RelationalTypeMapping typeMapping, bool condition)
+        {
+            throw new NotImplementedException();
         }
 
         protected virtual SqlExpression ApplyTypeMappingOnSqlBinary(
@@ -72,13 +100,11 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             if (inferredTypeMapping == null)
             {
-                if (left is SqlUnaryExpression leftUnary
-                    && leftUnary.OperatorType == ExpressionType.Convert)
+                if (left is SqlCastExpression leftCast)
                 {
                     inferredTypeMapping = _typeMappingSource.FindMapping(left.Type);
                 }
-                else if (right is SqlUnaryExpression rightUnary
-                    && rightUnary.OperatorType == ExpressionType.Convert)
+                else if (right is SqlCastExpression rightCast)
                 {
                     inferredTypeMapping = _typeMappingSource.FindMapping(right.Type);
                 }
@@ -130,6 +156,10 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                     }
 
                 case ExpressionType.Add:
+                case ExpressionType.Subtract:
+                case ExpressionType.Multiply:
+                case ExpressionType.Divide:
+                case ExpressionType.Modulo:
                     {
                         left = ApplyTypeMapping(left, inferredTypeMapping, false);
                         right = ApplyTypeMapping(right, inferredTypeMapping, false);
@@ -151,6 +181,32 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             SqlFunctionExpression sqlFunctionExpression, RelationalTypeMapping typeMapping, bool condition)
         {
             return sqlFunctionExpression;
+        }
+
+        protected virtual SqlExpression ApplyTypeMappingOnLike(
+            LikeExpression likeExpression, RelationalTypeMapping typeMapping, bool condition)
+        {
+            var inferredTypeMapping = ExpressionExtensions.InferTypeMapping(likeExpression.Match, likeExpression.Pattern);
+
+            if (inferredTypeMapping == null)
+            {
+                return null;
+            }
+
+            var match = ApplyTypeMapping(likeExpression.Match, inferredTypeMapping, false);
+            var pattern = ApplyTypeMapping(likeExpression.Pattern, inferredTypeMapping, false);
+            var escapeChar = ApplyTypeMapping(
+                likeExpression.EscapeChar,
+                _typeMappingSource.FindMapping(likeExpression.EscapeChar.Type),
+                false);
+
+            return new LikeExpression(
+                match,
+                pattern,
+                escapeChar,
+                typeof(bool),
+                _boolTypeMapping,
+                true);
         }
 
         protected virtual SqlExpression ApplyTypeMappingOnSqlParameter(
@@ -175,27 +231,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
             return sqlConstantExpression.ApplyTypeMapping(typeMapping).ApplyCondition(condition);
         }
 
-        protected virtual SqlExpression ApplyTypeMappingOnSqlUnary(
-            SqlUnaryExpression sqlUnaryExpression, RelationalTypeMapping typeMapping, bool condition)
-        {
-            if (sqlUnaryExpression.OperatorType == ExpressionType.Convert
-                && typeMapping != null)
-            {
-                var operand = ApplyTypeMapping(
-                    sqlUnaryExpression.Operand,
-                    _typeMappingSource.FindMapping(sqlUnaryExpression.Operand.Type),
-                    false);
 
-                return new SqlUnaryExpression(
-                    sqlUnaryExpression.OperatorType,
-                    operand,
-                    sqlUnaryExpression.Type,
-                    typeMapping,
-                    condition);
-            }
-
-            return sqlUnaryExpression;
-        }
 
         protected virtual SqlExpression ApplyTypeMappingOnExtension(
             SqlExpression expression, RelationalTypeMapping typeMapping, bool condition)

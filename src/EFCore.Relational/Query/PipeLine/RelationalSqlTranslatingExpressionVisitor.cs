@@ -2,11 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Extensions.Internal;
 using Microsoft.EntityFrameworkCore.Query.PipeLine;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
@@ -132,6 +132,12 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 return extensionExpression;
             }
 
+            if (extensionExpression is ProjectionBindingExpression projectionBindingExpression)
+            {
+                return ((SelectExpression)projectionBindingExpression.QueryExpression)
+                    .GetProjectionExpression(projectionBindingExpression.ProjectionMember);
+            }
+
             return base.VisitExtension(extensionExpression);
         }
 
@@ -184,8 +190,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                 sqlOperand = _typeMappingApplyingExpressionVisitor.ApplyTypeMapping(
                         sqlOperand, _typeMappingSource.FindMapping(sqlOperand.Type), false);
 
-                return new SqlUnaryExpression(
-                    ExpressionType.Convert,
+                return new SqlCastExpression(
                     sqlOperand,
                     unaryExpression.Type,
                     null,
@@ -194,8 +199,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
 
             if (unaryExpression.NodeType == ExpressionType.Not)
             {
-                return new SqlUnaryExpression(
-                    ExpressionType.Not, sqlOperand, typeof(bool), _typeMappingSource.FindMapping(typeof(bool)), true);
+                return new SqlNotExpression(sqlOperand, typeof(bool), _typeMappingSource.FindMapping(typeof(bool)), true);
             }
 
             return null;

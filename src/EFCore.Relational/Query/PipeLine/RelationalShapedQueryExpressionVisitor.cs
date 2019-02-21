@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.PipeLine;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
@@ -109,7 +110,10 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
                         try
                         {
                             var relationalCommand = _querySqlGenerator
-                                .GetCommand(_selectExpression, _relationalQueryContext.ParameterValues);
+                                .GetCommand(
+                                    _selectExpression,
+                                    _relationalQueryContext.ParameterValues,
+                                    _relationalQueryContext.CommandLogger);
 
                             _dataReader
                                 = relationalCommand.ExecuteReader(

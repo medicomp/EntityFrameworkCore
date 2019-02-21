@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
@@ -29,7 +30,7 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
         private static readonly MethodInfo _substringMethodInfo
             = typeof(string).GetRuntimeMethod(nameof(string.Substring), new[] { typeof(int), typeof(int) });
 
-        private static readonly MethodInfo _methodInfo
+        private static readonly MethodInfo _startsWithMethodInfo
             = typeof(string).GetRuntimeMethod(nameof(string.StartsWith), new[] { typeof(string) });
 
         private static readonly MethodInfo _concat
@@ -153,6 +154,11 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
                     method.ReturnType,
                     instance.TypeMapping,
                     false);
+            }
+
+            if (_startsWithMethodInfo.Equals(method))
+            {
+
             }
 
             return null;

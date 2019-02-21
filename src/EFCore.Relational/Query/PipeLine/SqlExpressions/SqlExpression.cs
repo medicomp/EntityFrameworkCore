@@ -5,24 +5,15 @@ using System;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
+namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions
 {
     public abstract class SqlExpression : Expression
     {
-        private Type _type;
-
         protected SqlExpression(Type type, RelationalTypeMapping typeMapping, bool condition)
         {
-            _type = type;
+            Type = type;
             IsCondition = condition;
             TypeMapping = typeMapping;
-        }
-
-        public SqlExpression MakeNonNullableType()
-        {
-            _type = _type.UnwrapNullableType();
-
-            return this;
         }
 
         public SqlExpression ApplyTypeMapping(RelationalTypeMapping typeMapping)
@@ -45,7 +36,7 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
         }
 
         public override ExpressionType NodeType => ExpressionType.Extension;
-        public override Type Type => _type;
+        public override Type Type { get; }
         public bool IsCondition { get; private set; }
         public RelationalTypeMapping TypeMapping { get; private set; }
     }

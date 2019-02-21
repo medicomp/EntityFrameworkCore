@@ -2,9 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine;
+using Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
@@ -23,8 +23,7 @@ namespace Microsoft.EntityFrameworkCore.SqlServer.Query.Pipeline
             if (member.Name == nameof(string.Length)
                 && instance.Type == typeof(string))
             {
-                return new SqlUnaryExpression(
-                    ExpressionType.Convert,
+                return new SqlCastExpression(
                     new SqlFunctionExpression(
                         null,
                         "LEN",

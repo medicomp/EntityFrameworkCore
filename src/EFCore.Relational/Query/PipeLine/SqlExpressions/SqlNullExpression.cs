@@ -6,13 +6,13 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
+namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine.SqlExpressions
 {
-    public class SqlUnaryExpression : SqlExpression
+    public class SqlNullExpression : SqlExpression
     {
-        public SqlUnaryExpression(
-            ExpressionType operatorType,
+        public SqlNullExpression(
             SqlExpression operand,
+            bool negated,
             Type type,
             RelationalTypeMapping typeMapping,
             bool condition)
@@ -20,21 +20,20 @@ namespace Microsoft.EntityFrameworkCore.Relational.Query.PipeLine
         {
             Check.NotNull(operand, nameof(operand));
 
-            OperatorType = operatorType;
             Operand = operand;
+            Negated = negated;
         }
-
 
         protected override Expression VisitChildren(ExpressionVisitor visitor)
         {
             var operand = (SqlExpression)visitor.Visit(Operand);
 
             return operand != Operand
-                ? new SqlUnaryExpression(OperatorType, operand, Type, TypeMapping, IsCondition)
+                ? new SqlNullExpression(operand, Negated, Type, TypeMapping, IsCondition)
                 : this;
         }
 
-        public ExpressionType OperatorType { get; }
         public SqlExpression Operand { get; }
+        public bool Negated { get; }
     }
 }
