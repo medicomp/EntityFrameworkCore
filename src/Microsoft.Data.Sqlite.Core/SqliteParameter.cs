@@ -207,6 +207,18 @@ namespace Microsoft.Data.Sqlite
             SqliteType = SqliteType.Text;
         }
 
+#if NET40
+        /// <summary>
+        ///     Gets or sets the row version.
+        /// </summary>
+        /// <value>The row version.</value>
+        public override DataRowVersion SourceVersion
+        {
+            get;
+            set;
+        }
+#endif
+
         internal bool Bind(sqlite3_stmt stmt)
         {
             if (_parameterName.Length == 0)

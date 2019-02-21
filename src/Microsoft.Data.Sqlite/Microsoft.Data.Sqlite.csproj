@@ -1,7 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>SQLite implementation of the System.Data.Common provider model.
+    <PackageId>MultiTarget.Microsoft.Data.Sqlite</PackageId>
+    <Description>Fork of the Microsoft.Data.Sqlite project that adds .NET Framework 4.0 support for multi-targeted libraries.
+
+SQLite implementation of the System.Data.Common provider model.
 
 Commonly Used Types:
 Microsoft.Data.Sqlite.SqliteCommand
@@ -14,9 +17,17 @@ Microsoft.Data.Sqlite.SqliteParameter
 Microsoft.Data.Sqlite.SqliteTransaction</Description>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnableApiCheck>false</EnableApiCheck>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net40</TargetFrameworks>
     <MinClientVersion>3.6</MinClientVersion>
     <PackageTags>SQLite;Data;ADO.NET</PackageTags>
+    <PackageProjectUrl>https://github.com/medicomp/EntityFrameworkCore</PackageProjectUrl>
+    <PackageIconUrl></PackageIconUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <LangVersion>7.2</LangVersion>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <EnableApiCheck>false</EnableApiCheck>
   </PropertyGroup>
 
   <ItemGroup>

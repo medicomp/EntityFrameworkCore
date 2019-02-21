@@ -20,7 +20,11 @@ namespace Microsoft.Data.Sqlite
     {
         private const string MainDatabaseName = "main";
 
+#if NET40
+        private readonly IList<WeakReference> _commands = new List<WeakReference>();
+#else
         private readonly IList<WeakReference<SqliteCommand>> _commands = new List<WeakReference<SqliteCommand>>();
+#endif
 
         private string _connectionString;
         private ConnectionState _state;
@@ -242,10 +246,19 @@ namespace Microsoft.Data.Sqlite
 
             foreach (var reference in _commands)
             {
+#if NET40
+                var command = (SqliteCommand) reference.Target;
+
+                if (command != null)
+                {
+                    command.Dispose();
+                }
+#else
                 if (reference.TryGetTarget(out var command))
                 {
                     command.Dispose();
                 }
+#endif
             }
 
             _commands.Clear();
@@ -290,14 +303,23 @@ namespace Microsoft.Data.Sqlite
             => CreateCommand();
 
         internal void AddCommand(SqliteCommand command)
+#if NET40
+            => _commands.Add(new WeakReference(command));
+#else
             => _commands.Add(new WeakReference<SqliteCommand>(command));
+#endif
 
         internal void RemoveCommand(SqliteCommand command)
         {
             for (var i = _commands.Count - 1; i >= 0; i--)
             {
+#if NET40
+                var item = (SqliteCommand)_commands[i].Target;
+                if (item == null || item == command)
+#else
                 if (!_commands[i].TryGetTarget(out var item)
                     || item == command)
+#endif
                 {
                     _commands.RemoveAt(i);
                 }

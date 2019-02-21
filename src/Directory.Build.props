@@ -1,7 +1,14 @@
 ﻿<Project>
   <Import Project="..\Directory.Build.props" />
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net40'">
     <PackageReference Include="Internal.AspNetCore.Sdk" PrivateAssets="All" Version="$(InternalAspNetCoreSdkPackageVersion)" />
   </ItemGroup>
+
+  <!-- Empty targets to support net40 compilation -->
+  <Target Name="ApiCheck" Condition=" '$(TargetFramework)' == 'net40' ">
+  </Target>
+  
+  <Target Name="Generate-ApiCheck-Baselines" Condition=" '$(TargetFramework)' == 'net40' ">  
+  </Target>
 </Project>

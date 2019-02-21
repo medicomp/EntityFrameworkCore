@@ -20,23 +20,26 @@ namespace Microsoft.Data.Sqlite
     {
         private readonly SqliteCommand _command;
         private readonly bool _closeConnection;
-        private readonly Queue<(sqlite3_stmt stmt, bool)> _stmtQueue;
+        private readonly Queue<Tuple<sqlite3_stmt, bool>> _stmtQueue;
         private sqlite3_stmt _stmt;
         private SqliteDataRecord _record;
-        private bool _hasRows;
+        private bool _hasRows = false;
         private bool _stepped;
         private bool _done;
         private bool _closed;
 
         internal SqliteDataReader(
             SqliteCommand command,
-            Queue<(sqlite3_stmt, bool)> stmtQueue,
+            Queue<Tuple<sqlite3_stmt, bool>> stmtQueue,
             int recordsAffected,
             bool closeConnection)
         {
             if (stmtQueue.Count != 0)
             {
-                (_stmt, _hasRows) = stmtQueue.Dequeue();
+                Tuple<sqlite3_stmt, bool> statementTuple = stmtQueue.Dequeue();
+                _stmt = statementTuple.Item1;
+                _hasRows = statementTuple.Item2;
+
                 _record = new SqliteDataRecord(_stmt);
             }
 
@@ -153,7 +156,9 @@ namespace Microsoft.Data.Sqlite
 
             raw.sqlite3_reset(_stmt);
 
-            (_stmt, _hasRows) = _stmtQueue.Dequeue();
+            Tuple<sqlite3_stmt, bool> statementTuple = _stmtQueue.Dequeue();
+            _stmt = statementTuple.Item1;
+            _hasRows = statementTuple.Item2;
             _record = new SqliteDataRecord(_stmt);
             _stepped = false;
             _done = false;
@@ -191,7 +196,7 @@ namespace Microsoft.Data.Sqlite
 
             while (_stmtQueue.Count != 0)
             {
-                raw.sqlite3_reset(_stmtQueue.Dequeue().stmt);
+                raw.sqlite3_reset(_stmtQueue.Dequeue().Item1);
             }
 
             _closed = true;
@@ -411,7 +416,11 @@ namespace Microsoft.Data.Sqlite
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The returned object.</returns>
-        public override Stream GetStream(int ordinal)
+        public
+#if NETSTANDARD2_0
+            override 
+# endif
+            Stream GetStream(int ordinal)
             => _record.GetStream(ordinal);
 
         /// <summary>
@@ -420,7 +429,11 @@ namespace Microsoft.Data.Sqlite
         /// <typeparam name="T">The type of the value.</typeparam>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override T GetFieldValue<T>(int ordinal)
+        public 
+#if NETSTANDARD2_0
+            override 
+#endif
+            T GetFieldValue<T>(int ordinal)
         {
             if (typeof(T) == typeof(DBNull)
                 && (!_stepped || _done))

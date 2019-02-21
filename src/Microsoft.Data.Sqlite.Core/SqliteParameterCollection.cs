@@ -304,6 +304,29 @@ namespace Microsoft.Data.Sqlite
         public override void RemoveAt(string parameterName)
             => RemoveAt(IndexOfChecked(parameterName));
 
+#if NET40
+        /// <summary>
+        ///     Gets a value indicating whether this parameter collection is synchronized.
+        /// </summary>
+        /// <value>Flag indicating whether this parameter collection is synchronized.</value>
+        public override bool IsSynchronized
+            => false;
+
+        /// <summary>
+        ///     Gets a value indicating whether this parameter collection is of a fixed size.
+        /// </summary>
+        /// <value>Flag indicating whether this parameter collection is of a fixed size.</value>
+        public override bool IsFixedSize
+            => false;
+
+        /// <summary>
+        ///     Gets a value indicating whether this parameter collection is read-only.
+        /// </summary>
+        /// <value>Flag indicating whether this parameter collection is read-only.</value>
+        public override bool IsReadOnly
+            => false;
+#endif
+
         /// <summary>
         ///     Sets the parameter at the specified index.
         /// </summary>

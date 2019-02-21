@@ -22,7 +22,11 @@ namespace <#= model.Namespace #>
     internal static class <#= model.Class #>
     {
         private static readonly ResourceManager _resourceManager
-            = new ResourceManager("<#= model.ResourceName #>", typeof(<#= model.Class #>).GetTypeInfo().Assembly);
+            = new ResourceManager("<#= model.ResourceName #>", typeof(<#= model.Class #>)
+#if NETSTANDARD2_0
+                .GetTypeInfo()
+#endif
+                .Assembly);
 <#
     foreach (var resource in model.Resources)
     {

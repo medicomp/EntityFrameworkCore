@@ -21,6 +21,25 @@
     "Default": {
         "rules": [
             "DefaultCompositeRule"
-        ]
+        ],
+        "packages": {
+            "MultiTarget.Microsoft.Data.Sqlite.Core": {
+                "Exclusions": {
+                    "SERVICING_ATTRIBUTE": {
+                        "lib/net40/Microsoft.Data.Sqlite.dll": "AssemblyMetadata attribute type doesn't exist in .NET 4.0"
+                    },
+                    "NUSPEC_ICONURL": {
+                        "*": "I'm only a fork"
+                    }
+                }
+            },
+            "MultiTarget.Microsoft.Data.Sqlite": {
+                "Exclusions": {
+                    "NUSPEC_ICONURL": {
+                        "*": "I'm only a fork"
+                    }
+                }
+            }
+        }
     }
 }

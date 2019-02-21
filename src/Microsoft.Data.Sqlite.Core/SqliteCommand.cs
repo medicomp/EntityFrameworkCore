@@ -318,7 +318,7 @@ namespace Microsoft.Data.Sqlite
             var hasChanges = false;
             var changes = 0;
             int rc;
-            var stmts = new Queue<(sqlite3_stmt, bool)>();
+            var stmts = new Queue<Tuple<sqlite3_stmt, bool>>();
             var unprepared = _preparedStatements.Count == 0;
             var timer = Stopwatch.StartNew();
 
@@ -373,7 +373,7 @@ namespace Microsoft.Data.Sqlite
                         //     It will result in false positives, but it's the best we can do without re-parsing SQL
                         || raw.sqlite3_stmt_readonly(stmt) != 0)
                     {
-                        stmts.Enqueue((stmt, rc != raw.SQLITE_DONE));
+                        stmts.Enqueue(new Tuple<sqlite3_stmt, bool>(stmt, rc != raw.SQLITE_DONE));
                     }
                     else
                     {
@@ -411,7 +411,11 @@ namespace Microsoft.Data.Sqlite
         ///     SQLite does not support asynchronous execution. Use write-ahead logging instead.
         /// </remarks>
         /// <seealso href="http://sqlite.org/wal.html">Write-Ahead Logging</seealso>
-        public new virtual Task<SqliteDataReader> ExecuteReaderAsync()
+        public
+#if NETSTANDARD2_0
+            new 
+#endif
+            virtual Task<SqliteDataReader> ExecuteReaderAsync()
             => ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
 
         /// <summary>
@@ -423,7 +427,11 @@ namespace Microsoft.Data.Sqlite
         ///     SQLite does not support asynchronous execution. Use write-ahead logging instead.
         /// </remarks>
         /// <seealso href="http://sqlite.org/wal.html">Write-Ahead Logging</seealso>
-        public new virtual Task<SqliteDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
+        public
+#if NETSTANDARD2_0
+            new 
+#endif
+            virtual Task<SqliteDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
             => ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
 
         /// <summary>
@@ -435,7 +443,11 @@ namespace Microsoft.Data.Sqlite
         ///     SQLite does not support asynchronous execution. Use write-ahead logging instead.
         /// </remarks>
         /// <seealso href="http://sqlite.org/wal.html">Write-Ahead Logging</seealso>
-        public new virtual Task<SqliteDataReader> ExecuteReaderAsync(CommandBehavior behavior)
+        public
+#if NETSTANDARD2_0
+            new
+#endif
+            virtual Task<SqliteDataReader> ExecuteReaderAsync(CommandBehavior behavior)
             => ExecuteReaderAsync(behavior, CancellationToken.None);
 
         /// <summary>
@@ -448,13 +460,19 @@ namespace Microsoft.Data.Sqlite
         ///     SQLite does not support asynchronous execution. Use write-ahead logging instead.
         /// </remarks>
         /// <seealso href="http://sqlite.org/wal.html">Write-Ahead Logging</seealso>
-        public new virtual Task<SqliteDataReader> ExecuteReaderAsync(
+        public
+#if NETSTANDARD2_0
+            new
+#endif
+            virtual Task<SqliteDataReader> ExecuteReaderAsync(
             CommandBehavior behavior,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            return Task.FromResult(ExecuteReader(behavior));
+            var taskCompletionSource = new TaskCompletionSource<SqliteDataReader>();
+            taskCompletionSource.SetResult(ExecuteReader(behavior));
+            return taskCompletionSource.Task;
         }
 
         /// <summary>
@@ -463,7 +481,11 @@ namespace Microsoft.Data.Sqlite
         /// <param name="behavior">A description of query's results and its effect on the database.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(
+        protected
+#if NETSTANDARD2_0
+            override 
+#endif
+            async Task<DbDataReader> ExecuteDbDataReaderAsync(
             CommandBehavior behavior,
             CancellationToken cancellationToken)
             => await ExecuteReaderAsync(behavior, cancellationToken);

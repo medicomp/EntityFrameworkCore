@@ -32,8 +32,8 @@ namespace Microsoft.Data.Sqlite
             Cache
         }
 
-        private static readonly IReadOnlyList<string> _validKeywords;
-        private static readonly IReadOnlyDictionary<string, Keywords> _keywords;
+        private static readonly string[] _validKeywords;
+        private static readonly Dictionary<string, Keywords> _keywords;
 
         private string _dataSource = string.Empty;
         private SqliteOpenMode _mode = SqliteOpenMode.ReadWriteCreate;
@@ -41,11 +41,10 @@ namespace Microsoft.Data.Sqlite
 
         static SqliteConnectionStringBuilder()
         {
-            var validKeywords = new string[3];
-            validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
-            validKeywords[(int)Keywords.Mode] = ModeKeyword;
-            validKeywords[(int)Keywords.Cache] = CacheKeyword;
-            _validKeywords = validKeywords;
+            _validKeywords = new string[3];
+            _validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
+            _validKeywords[(int)Keywords.Mode] = ModeKeyword;
+            _validKeywords[(int)Keywords.Cache] = CacheKeyword;
 
             _keywords = new Dictionary<string, Keywords>(3, StringComparer.OrdinalIgnoreCase)
             {
@@ -110,8 +109,8 @@ namespace Microsoft.Data.Sqlite
         {
             get
             {
-                var values = new object[_validKeywords.Count];
-                for (var i = 0; i < _validKeywords.Count; i++)
+                var values = new object[_validKeywords.Length];
+                for (var i = 0; i < _validKeywords.Length; i++)
                 {
                     values[i] = GetAt((Keywords)i);
                 }
@@ -181,7 +180,11 @@ namespace Microsoft.Data.Sqlite
             {
                 enumValue = (TEnum)value;
             }
+#if NET40
+            else if (value.GetType().IsEnum)
+#else
             else if (value.GetType().GetTypeInfo().IsEnum)
+#endif
             {
                 throw new ArgumentException(Resources.ConvertFailed(value.GetType(), typeof(TEnum)));
             }
@@ -208,7 +211,7 @@ namespace Microsoft.Data.Sqlite
         {
             base.Clear();
 
-            for (var i = 0; i < _validKeywords.Count; i++)
+            for (var i = 0; i < _validKeywords.Length; i++)
             {
                 Reset((Keywords)i);
             }

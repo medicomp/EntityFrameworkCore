@@ -1,10 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.Sqlite</AssemblyName>
     <RootNamespace>$(AssemblyName)</RootNamespace>
-    <PackageId>Microsoft.Data.Sqlite.Core</PackageId>
-    <Description>SQLite implementation of the System.Data.Common provider model.
+    <PackageId>MultiTarget.Microsoft.Data.Sqlite.Core</PackageId>
+    <Description>Fork of the Microsoft.Data.Sqlite project that adds .NET Framework 4.0 support for multi-targeted libraries.
+
+SQLite implementation of the System.Data.Common provider model.
 
 Commonly Used Types:
 Microsoft.Data.Sqlite.SqliteCommand
@@ -15,14 +17,40 @@ Microsoft.Data.Sqlite.SqliteException
 Microsoft.Data.Sqlite.SqliteFactory
 Microsoft.Data.Sqlite.SqliteParameter
 Microsoft.Data.Sqlite.SqliteTransaction</Description>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net40</TargetFrameworks>
     <MinClientVersion>3.6</MinClientVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <CodeAnalysisRuleSet>Microsoft.Data.Sqlite.Core.ruleset</CodeAnalysisRuleSet>
     <PackageTags>SQLite;Data;ADO.NET</PackageTags>
+    <PackageProjectUrl>https://github.com/medicomp/EntityFrameworkCore</PackageProjectUrl>
+    <PackageIconUrl></PackageIconUrl>
+  </PropertyGroup>
+
+  <!-- Necessary because of the fact that referencing Internal.AspNetCore.Sdk (where these properties are defined) breaks
+       the build for net40, so I've replicated them here for the time being -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <LangVersion>7.2</LangVersion>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <EnableApiCheck>false</EnableApiCheck>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft Corporation.</Company>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <IncludeSymbols>true</IncludeSymbols>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/aspnet/Home/2.0.0/LICENSE.txt</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="baseline.netcore.json">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>baseline.netcore.cs</LastGenOutput>
+    </None>
+    <None Update="Microsoft.Data.Sqlite.Core.ruleset">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Microsoft.Data.Sqlite.Core.cs</LastGenOutput>
+    </None>
     <None Update="Properties\Resources.Designer.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -42,7 +70,19 @@ Microsoft.Data.Sqlite.SqliteTransaction</Description>
     <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopAnalyzersPackageVersion)" PrivateAssets="All" />
   </ItemGroup>
 
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <Reference Include="System.Data" />
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+    <PackageReference Include="Microsoft.Bcl.Async" Version="$(BclAsyncPackageVersion)" />
+  </ItemGroup>
+
   <ItemGroup>
+    <Compile Update="Microsoft.Data.Sqlite.Core.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Microsoft.Data.Sqlite.Core.ruleset</DependentUpon>
+    </Compile>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
